@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios{% endblock title %}
+{% block main %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Id
+            </th>
+            <th>
+                Nombre
+            </th>
+            <th>
+                Orders
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for usuario in usuarios %}
+        <tr>
+            <td>{{usuario[0]}}</td>
+            <td>{{usuario[1]}}</td>
+            <td><a href="orders/{{usuario[0]}}">Ver ordenes</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock main %}

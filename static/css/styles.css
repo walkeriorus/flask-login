@@ -1,0 +1,18 @@
+#form{
+    display: grid;
+    background-color: rgb(35, 37, 40);
+    color: white;
+    font-size: 24px;
+    font-weight: 500;
+}
+form>input,form>label{
+    line-height: 24px;
+    padding-left: 25px;
+}
+form>label{
+    cursor: pointer;
+}
+input:disabled{
+    background-color: rgba(165, 42, 42, 0.565);
+    color: rgb(225, 223, 223);
+}

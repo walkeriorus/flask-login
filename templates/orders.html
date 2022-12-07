@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Orders{% endblock title %}
+{% block main %}
+    {% if orders %}
+    <h2>Ordenes del usuario: {{orders[0][0]}}</h2>
+    <table class="table stripped">
+        <thead>
+            <tr>
+                <th>order Id</th>
+                <th>order Number</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{order[1]}}</td>
+                <td>{{order[2]}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <h2>El usuario no registra ordenes</h2>
+    {% endif %}
+{% endblock main %}
