@@ -12,7 +12,8 @@ Iniciar Sesión
         <label for="userPass">Contraseña</label>
         <input type="password" name="userPass" id="userPass" class="form-control" placeholder="*******">
     </div>
-    <button type="submit" class="btn btn-primary">Enviar</button>
+    <a href="{{url_for('create')}}" class="me-5">Registrarse</a>
+    <button type="submit" class="btn btn-primary">Iniciar sesion</button>
 </form>
 {% with messages = get_flashed_messages()  %}
 {% if messages %}
