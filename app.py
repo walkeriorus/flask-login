@@ -3,6 +3,8 @@ from flaskext.mysql import MySQL
 from flask_login import LoginManager, login_required, login_user, logout_user
 from user import User
 
+from pymysql import Error
+
 app = Flask(__name__)
 app.config.from_object('config.DefaultSettings')
 
@@ -44,14 +46,17 @@ def create():
     
         sql = f"""INSERT INTO `sounds`.`usuarios`(`user_name`,`user_email`,`user_pass`)
         VALUES('{usuario.name}','{usuario.email}','{usuario.password}')"""
-        
-        conn = db.connect()
-        cursor = conn.cursor()
-        
-        cursor.execute(sql)
-        conn.commit()
-    
-        return redirect('/')
+        try:
+            conn = db.connect()
+            cursor = conn.cursor()
+            cursor.execute(sql)
+        except Error as e:
+            print(e)
+            flash('El nombre de usuario ya existe,intente con otro nombre.')
+            return redirect(url_for('create'))
+        else:
+            conn.commit()
+            return redirect(url_for('inicio'))
 
 @app.route('/orders/<int:id>')
 @login_required
@@ -104,7 +109,7 @@ def login():
                 return redirect(url_for('mostrarUsuarios'))
             else:
                 flash('Usuario o contraseña incorrectos')
-                return render_template(url_for('inicio'))
+                return redirect(url_for('login'))
         else:
             #el nombre del usuario no existe
             flash('El usuario no existe')
@@ -115,6 +120,31 @@ def logout():
     logout_user()
     return redirect(url_for('inicio'))
 
+@app.route('/crearProducto',methods=['GET','POST'])
+@login_required
+def crearProducto():
+    if request.method == 'POST':
+        _prodName = request.form.get('productName')
+        _prodPrice = request.form.get('productPrice')
+        
+        sql = f"""INSERT INTO `sounds`.`productos`(`nombre`,`precio`)
+                VALUES ('{_prodName}',{_prodPrice})"""
+        
+        conn = db.connect()
+        curr = conn.cursor()
+        
+        try:
+            curr.execute(sql)
+        except Error as e:
+            print(e)
+            flash('Ha ocurrido un error, producto no añadido')
+            return redirect(url_for('crearProducto'))
+        else:
+            conn.commit()
+            flash('Producto agregado con éxito.')
+            return redirect(url_for('crearProducto'))
+    else:
+        return render_template('cargar-producto.html')
 
 if __name__=="__main__":
     app.run()
