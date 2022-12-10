@@ -1,3 +1,2 @@
-.forms/
-.vscode/
-__pycache__/
+__*__/
+.*/
