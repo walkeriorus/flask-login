@@ -3,6 +3,7 @@
 Iniciar Sesión
 {% endblock title %}
 {% block main %}
+{% include 'header.html' %}
 <form action="/login" method="POST" enctype="multipart/form-data" id="form" class="container text-center">
     <div class="form-group">
         <label for="userName">Usuario</label>
