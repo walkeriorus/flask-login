@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Productos{% endblock title %}
+{% block main %}
+{% include 'header.html' %}
+<table id="products" class="table table-striped">
+    <thead>
+        <th>id</th>
+        <th>nombre</th>
+        <th>precio</th>
+        <th>imagen</th>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td>{{product["id"]}}</td>
+            <td>{{product.name}}</td>
+            <td>{{product.price}}</td>
+            <td>{{product.image}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock main %}
