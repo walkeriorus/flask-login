@@ -22,6 +22,7 @@ def inicio():
     return render_template('login.html')
 
 @app.route('/usuarios')
+@login_required
 def mostrarUsuarios():
     sql = "SELECT `user_id`, `user_name`, `user_pass` FROM `sounds`.`usuarios`"
     conn = db.connect()
@@ -145,6 +146,29 @@ def crearProducto():
             return redirect(url_for('crearProducto'))
     else:
         return render_template('cargar-producto.html')
+
+@app.route('/productos',methods=['GET'])
+@login_required
+def verProductos():
+    sql = f"""SELECT * FROM `sounds`.`productos`"""
+    
+    conn = db.connect()
+    curr = conn.cursor()
+    
+    curr.execute(sql)
+    class Product:
+        def __init__(self, id, name, price, image):
+            self.id = id
+            self.name = name
+            self.price = price
+            self.image = image
+            
+    productos = list(map(lambda row: Product(row[0],row[1],row[2],row[3]),curr.fetchall()))
+
+    for producto in productos:
+        print(f"{producto.id},{producto.name},{producto.price}, {producto.image}")
+    
+    return render_template('productos.html', products = productos )
 
 if __name__=="__main__":
     app.run()
