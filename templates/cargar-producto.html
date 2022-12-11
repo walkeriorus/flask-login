@@ -4,7 +4,7 @@ Crear producto
 {% endblock title %}
 {% block main %}
 {% include 'headerAdmin.html' %}
-<form action="" method="POST" enctype="multipart/form-data" id="form" class="container text-center">
+<form action="{{url_for('crearProducto')}}" method="POST" enctype="multipart/form-data" id="form" class="container text-center">
     <div class="form-group">
         <label for="productName">Nombre del producto</label>
         <input type="text" name="productName" id="productName" class="form-control" placeholder="telvisor">

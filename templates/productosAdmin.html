@@ -18,9 +18,19 @@
             <td>{{product.price}}</td>
             <td>{{product.image}}</td>
             <td><a href="{{url_for('eliminarProducto',product_id=product.id)}}"><img src="{{url_for('static',filename='img/eliminar-50.png')}}" alt="tacho de basura" title="eliminar"></a></td>
-            <td><a href="{{url_for('agregarAlCarrito',user_id=current_user.id,id_prod=product.id)}}"><img src="{{url_for('static',filename='img/editar-50.png')}}" alt="lapiz" title="editar"></a></td>
+            <td><a href="{{url_for('editarProducto',product_id=product.id)}}"><img src="{{url_for('static',filename='img/editar-50.png')}}" alt="lapiz" title="editar"></a></td>
         </tr>
         {% endfor %}
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-primary alert-dismissible" role="alert">
+            <strong>{{message}}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
     </tbody>
 </table>
 {% endblock main %}
