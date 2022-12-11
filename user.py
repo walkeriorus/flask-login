@@ -8,14 +8,14 @@ from flask_login import UserMixin
 #Flask-Login exige que la clase User tenga los siguientes atributos:
 #is_authenticated,is_active,is_anonymous,get_id (Para mas informacion ver la documentacion oficial)
 
-
 class User(UserMixin):
-    def __init__(self, id, name, email, password="123456" ):
+    def __init__(self, id, name, email, password="123456",is_admin = False ):
         self.id = id
         self.name = name
         self.email = email
         self.password = generate_password_hash( password )
-        
+        self.is_admin = is_admin
+    
     def set_password(self, password ):
         self.password = generate_password_hash( password )
         
@@ -32,7 +32,7 @@ class User(UserMixin):
         conn = db.connect()
         curr = conn.cursor()
         
-        sql = f"SELECT user_id, user_name, user_email FROM `sounds`.`usuarios` WHERE user_id = '{id}'"
+        sql = f"SELECT user_id, user_name, user_email, user_role FROM `sounds`.`usuarios` WHERE user_id = '{id}'"
         
         curr.execute(sql)
         
@@ -41,6 +41,6 @@ class User(UserMixin):
         if user != None:
             #Entonces el usuario estaba en la base de datos
             #Como esto se utiliza cuando el usuario ya inicio sesion la contraseña ya no es importante
-            return User(user[0],user[1],user[2])
+            return User(user[0],user[1],user[2],is_admin=user[3])
         else:
             return None
