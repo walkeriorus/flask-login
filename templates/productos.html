@@ -8,7 +8,7 @@
         <th>nombre</th>
         <th>precio</th>
         <th>imagen</th>
-        <th>agregar al carrito</th>
+        <th>acción</th>
     </thead>
     <tbody>
         {% for product in products %}
@@ -17,7 +17,7 @@
             <td>{{product.name}}</td>
             <td>{{product.price}}</td>
             <td>{{product.image}}</td>
-            <td><a href="{{url_for('agregarAlCarrito',user_id=current_user.id,id_prod=product.id)}}">+</a></td>
+            <td><a href="{{url_for('agregarAlCarrito',user_id=current_user.id,id_prod=product.id)}}"><img src="{{url_for('static',filename='img/add-to-cart-32.png')}}" alt="carrito de compras con simbolo de suma" title="añadir al carrito"></a></td>
         </tr>
         {% endfor %}
     </tbody>
