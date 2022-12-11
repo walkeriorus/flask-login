@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}
+    Carrito de {{current_user.name}}
+{% endblock title %}
+{% block main %}
+{% include 'header.html' %}
+<table id="carrito" class="table table-striped">
+    <thead>
+        <th>id</th>
+        <th>nombre</th>
+        <th>precio</th>
+        <th>imagen</th>
+        <th>quitar del carrito</th>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td>{{product.id}}</td>
+            <td>{{product.name}}</td>
+            <td>{{product.price}}</td>
+            <td>{{product.image}}</td>
+            <td><a href="#">-</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock main %}
