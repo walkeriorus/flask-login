@@ -2,6 +2,7 @@ from flask import Flask, redirect,render_template,request,url_for, flash
 from flaskext.mysql import MySQL
 from flask_login import LoginManager, login_required, login_user, logout_user
 from user import User
+from modelos import Product
 
 from pymysql import Error
 
@@ -19,7 +20,7 @@ login_manager.init_app(app)
 
 @app.route('/')
 def inicio():
-    return render_template('login.html')
+    return redirect(url_for('login'))
 
 @app.route('/usuarios')
 @login_required
@@ -59,23 +60,6 @@ def create():
             conn.commit()
             return redirect(url_for('inicio'))
 
-@app.route('/orders/<int:id>')
-@login_required
-def showOrders(id):
-    
-    conn = db.connect()
-    curr = conn.cursor()
-    
-    sql = """SELECT `user_name`,`order_id`, `order_number` 
-    FROM `sounds`.`usuarios`,`sounds`.`orders`
-    WHERE `usuarios`.`user_id` = %s AND `usuarios`.`user_id`=`orders`.`fk_user_id`"""
-    curr.execute(sql, (id) )
-    orders = curr.fetchall()
-    conn.commit()
-    
-    return render_template('orders.html', orders = orders)
-
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.get(db,user_id)
@@ -107,7 +91,7 @@ def login():
             print("logged_in: ", logged_in)
             if logged_in:
                 login_user(usuario)
-                return redirect(url_for('mostrarUsuarios'))
+                return redirect(url_for('verProductos'))
             else:
                 flash('Usuario o contraseña incorrectos')
                 return redirect(url_for('login'))
@@ -156,16 +140,38 @@ def verProductos():
     curr = conn.cursor()
     
     curr.execute(sql)
-    class Product:
-        def __init__(self, id, name, price, image):
-            self.id = id
-            self.name = name
-            self.price = price
-            self.image = image
             
     productos = list(map(lambda row: Product(row[0],row[1],row[2],row[3]),curr.fetchall()))
     
     return render_template('productos.html', products = productos )
+
+@app.route('/carrito/<int:user_id>/<int:id_prod>')
+@login_required
+def agregarAlCarrito(user_id,id_prod):
+    conn = db.connect()
+    curr = conn.cursor()
+    
+    sql = f"""INSERT INTO `sounds`.`carrito`(fk_user_id,fk_id_producto)
+    VALUES({user_id},{id_prod})
+    """
+    curr.execute(sql)
+    conn.commit()
+    
+    return redirect(url_for('verProductos'))
+
+@app.route('/verCarrito/<int:user_id>')
+@login_required
+def verCarrito(user_id):
+    sql = f"""SELECT `productos`.`id_producto`, `productos`.`nombre`, `productos`.`precio`, `productos`.`imagen` 
+    FROM `sounds`.`productos`, `sounds`.`carrito`, `sounds`.`usuarios`
+    WHERE `productos`.`id_producto` = `carrito`.`fk_id_producto` AND `carrito`.`fk_user_id` = `usuarios`.`user_id`
+    AND `usuarios`.`user_id`={user_id};"""
+    conn = db.connect()
+    curr = conn.cursor()
+    curr.execute(sql)
+    productos = list(map(lambda row : Product(row[0],row[1],row[2],row[3]), curr.fetchall()))
+    conn.commit()
+    return render_template('carrito.html', products = productos)
 
 if __name__=="__main__":
     app.run()
