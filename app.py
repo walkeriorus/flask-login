@@ -91,7 +91,10 @@ def login():
             print("logged_in: ", logged_in)
             if logged_in:
                 login_user(usuario)
-                return redirect(url_for('verProductos'))
+                if not current_user.is_admin:
+                    return redirect(url_for('verProductos'))
+                else:
+                    return redirect(url_for('manipularProductos'))
             else:
                 flash('Usuario o contraseña incorrectos')
                 return redirect(url_for('login'))
@@ -104,42 +107,6 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('inicio'))
-
-@app.route('/crearProducto',methods=['GET','POST'])
-@login_required
-def crearProducto():
-    print("\n"*6,current_user.is_admin,"\n"*6)
-    if current_user.is_admin:
-        if request.method == 'POST':
-            _prodName = request.form.get('productName')
-            _prodPrice = request.form.get('productPrice')
-            
-            sql = f"""INSERT INTO `sounds`.`productos`(`nombre`,`precio`)
-                    VALUES ('{_prodName}',{_prodPrice})"""
-            
-            conn = db.connect()
-            curr = conn.cursor()
-            
-            try:
-                curr.execute(sql)
-            except Error as e:
-                print(e)
-                flash('Ha ocurrido un error, producto no añadido')
-                return redirect(url_for('crearProducto'))
-            else:
-                conn.commit()
-                flash('Producto agregado con éxito.')
-                return redirect(url_for('crearProducto'))
-        else:
-            return render_template('cargar-producto.html')
-    else:
-        return redirect(url_for('usuarioNoAutorizado'))
-
-@app.route('/error')
-@login_required
-def usuarioNoAutorizado():
-    return render_template('error.html')
-
 
 @app.route('/productos',methods=['GET'])
 @login_required
@@ -200,6 +167,71 @@ def verCarrito(user_id):
     productos = list(map(lambda row : Product(row[0],row[1],row[2],row[3]), curr.fetchall()))
     conn.commit()
     return render_template('carrito.html', products = productos)
+#-----------SECCION ADMIN -------------------#
+
+@app.route('/productosAdmin')
+@login_required
+def manipularProductos():
+    if current_user.is_admin:
+        sql = f"""SELECT * FROM `sounds`.`productos`"""
+    
+        conn = db.connect()
+        curr = conn.cursor()
+        
+        curr.execute(sql)
+                
+        productos = list(map(lambda row: Product(row[0],row[1],row[2],row[3]),curr.fetchall()))
+        return render_template('productosAdmin.html', products = productos)
+
+
+
+@app.route('/crearProducto',methods=['GET','POST'])
+@login_required
+def crearProducto():
+    print("\n"*6,current_user.is_admin,"\n"*6)
+    if current_user.is_admin:
+        if request.method == 'POST':
+            _prodName = request.form.get('productName')
+            _prodPrice = request.form.get('productPrice')
+            
+            sql = f"""INSERT INTO `sounds`.`productos`(`nombre`,`precio`)
+                    VALUES ('{_prodName}',{_prodPrice})"""
+            
+            conn = db.connect()
+            curr = conn.cursor()
+            
+            try:
+                curr.execute(sql)
+            except Error as e:
+                print(e)
+                flash('Ha ocurrido un error, producto no añadido')
+                return redirect(url_for('crearProducto'))
+            else:
+                conn.commit()
+                flash('Producto agregado con éxito.')
+                return redirect(url_for('crearProducto'))
+        else:
+            return render_template('cargar-producto.html')
+    else:
+        return redirect(url_for('usuarioNoAutorizado'))
+
+@app.route('/eliminar/<int:product_id>')
+@login_required
+def eliminarProducto(product_id):
+    sql_delete = f"""DELETE FROM `sounds`.`productos`
+    WHERE `id_producto` = {product_id}"""
+    conn = db.connect()
+    curr = conn.cursor()
+    curr.execute(sql_delete)
+    conn.commit()
+    return redirect(url_for('manipularProductos'))
+
+
+@app.route('/error')
+@login_required
+def usuarioNoAutorizado():
+    return render_template('error.html')
+
 
 if __name__=="__main__":
     app.run()
