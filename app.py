@@ -224,8 +224,28 @@ def eliminarProducto(product_id):
     curr = conn.cursor()
     curr.execute(sql_delete)
     conn.commit()
+    flash('Producto eliminado.')
     return redirect(url_for('manipularProductos'))
 
+@app.route('/edit/<int:product_id>')
+@login_required
+def editarProducto(product_id):
+    sql_select = f"""SELECT * FROM `sounds`.`productos`
+    WHERE `id_producto` = {product_id}"""
+    
+    conn = db.connect()
+    curr = conn.cursor()
+    
+    curr.execute(sql_select)
+    productInfo = curr.fetchone()
+    
+    producto = Product(productInfo[0],productInfo[1],productInfo[2],productInfo[3])
+    return render_template('edit.html', product = producto)
+
+@app.route('/guardar')
+@login_required
+def guardarCambios():
+    pass
 
 @app.route('/error')
 @login_required
