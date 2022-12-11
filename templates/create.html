@@ -3,6 +3,7 @@
 Guardar
 {% endblock title %}
 {% block main %}
+{% include 'headerAdmin.html' %}
 <form action="/create" method="POST" enctype="multipart/form-data" id="form" class="container text-center">
     <div class="form-group">
         <label for="userName">Usuario</label>
