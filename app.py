@@ -1,6 +1,6 @@
 from flask import Flask, redirect,render_template,request,url_for, flash
 from flaskext.mysql import MySQL
-from flask_login import LoginManager, login_required, login_user, logout_user
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from user import User
 from modelos import Product
 
@@ -83,8 +83,8 @@ def login():
         curr.execute(sql)
         dbUserInfo = curr.fetchone()
         if dbUserInfo != None:
-            dbUserId,dbUserName, dbUserEmail, dbUserPass = dbUserInfo
-            usuario = User(dbUserId,dbUserName,dbUserEmail,_userPass)
+            dbUserId,dbUserName, dbUserEmail, dbUserPass, db_userRole = dbUserInfo
+            usuario = User(dbUserId,dbUserName,dbUserEmail,_userPass, db_userRole)
         
             #Si el nuevo password hasheado es igual al que estaba en la base de datos entonces el usuario puse bien la contraseña
             logged_in = User.check_password( dbUserPass,_userPass )
@@ -108,28 +108,32 @@ def logout():
 @app.route('/crearProducto',methods=['GET','POST'])
 @login_required
 def crearProducto():
-    if request.method == 'POST':
-        _prodName = request.form.get('productName')
-        _prodPrice = request.form.get('productPrice')
-        
-        sql = f"""INSERT INTO `sounds`.`productos`(`nombre`,`precio`)
-                VALUES ('{_prodName}',{_prodPrice})"""
-        
-        conn = db.connect()
-        curr = conn.cursor()
-        
-        try:
-            curr.execute(sql)
-        except Error as e:
-            print(e)
-            flash('Ha ocurrido un error, producto no añadido')
-            return redirect(url_for('crearProducto'))
+    print("\n"*6,current_user.is_admin,"\n"*6)
+    if current_user.is_admin:
+        if request.method == 'POST':
+            _prodName = request.form.get('productName')
+            _prodPrice = request.form.get('productPrice')
+            
+            sql = f"""INSERT INTO `sounds`.`productos`(`nombre`,`precio`)
+                    VALUES ('{_prodName}',{_prodPrice})"""
+            
+            conn = db.connect()
+            curr = conn.cursor()
+            
+            try:
+                curr.execute(sql)
+            except Error as e:
+                print(e)
+                flash('Ha ocurrido un error, producto no añadido')
+                return redirect(url_for('crearProducto'))
+            else:
+                conn.commit()
+                flash('Producto agregado con éxito.')
+                return redirect(url_for('crearProducto'))
         else:
-            conn.commit()
-            flash('Producto agregado con éxito.')
-            return redirect(url_for('crearProducto'))
+            return render_template('cargar-producto.html')
     else:
-        return render_template('cargar-producto.html')
+        pass
 
 @app.route('/productos',methods=['GET'])
 @login_required
