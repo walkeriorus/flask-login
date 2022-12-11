@@ -159,6 +159,24 @@ def agregarAlCarrito(user_id,id_prod):
     
     return redirect(url_for('verProductos'))
 
+@app.route('/quitarDelCarrito/<int:user_id>/<int:product_id>')
+@login_required
+def quitarDelCarrito(user_id,product_id):
+    
+    sql_delete = f"""DELETE FROM `sounds`.`carrito`
+    WHERE `fk_user_id`={user_id} AND `fk_id_producto`={product_id}"""
+    
+    conn = db.connect()
+    curr = conn.cursor()
+    
+    curr.execute(sql_delete)
+    conn.commit()
+    
+    flash(f'Elimnación de producto éxitosa.')
+    
+    return redirect(url_for('verCarrito',user_id = user_id))
+
+
 @app.route('/verCarrito/<int:user_id>')
 @login_required
 def verCarrito(user_id):
