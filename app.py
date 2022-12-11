@@ -1,6 +1,6 @@
 from flask import Flask, redirect,render_template,request,url_for, flash
 from flaskext.mysql import MySQL
-from flask_login import LoginManager, login_required, login_user, logout_user, current_user
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user, user_unauthorized
 from user import User
 from modelos import Product
 
@@ -133,7 +133,13 @@ def crearProducto():
         else:
             return render_template('cargar-producto.html')
     else:
-        pass
+        return redirect(url_for('usuarioNoAutorizado'))
+
+@app.route('/error')
+@login_required
+def usuarioNoAutorizado():
+    return render_template('error.html')
+
 
 @app.route('/productos',methods=['GET'])
 @login_required
