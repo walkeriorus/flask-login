@@ -242,10 +242,24 @@ def editarProducto(product_id):
     producto = Product(productInfo[0],productInfo[1],productInfo[2],productInfo[3])
     return render_template('edit.html', product = producto)
 
-@app.route('/guardar')
+@app.route('/guardar',methods=['POST'])
 @login_required
 def guardarCambios():
-    pass
+    
+    productId = request.form.get('productId')
+    productName = request.form.get('productName')
+    productPrice = request.form.get('productPrice')
+    
+    sql_update = f"""UPDATE `sounds`.`productos`
+    SET nombre = '{productName}', precio = {productPrice} WHERE id_producto = {productId}"""
+    
+    conn = db.connect()
+    curr = conn.cursor()
+    
+    curr.execute(sql_update)
+    conn.commit()
+    
+    return redirect(url_for('manipularProductos'))
 
 @app.route('/error')
 @login_required
