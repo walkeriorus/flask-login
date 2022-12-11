@@ -164,9 +164,6 @@ def verProductos():
             self.image = image
             
     productos = list(map(lambda row: Product(row[0],row[1],row[2],row[3]),curr.fetchall()))
-
-    for producto in productos:
-        print(f"{producto.id},{producto.name},{producto.price}, {producto.image}")
     
     return render_template('productos.html', products = productos )
 
