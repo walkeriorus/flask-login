@@ -9,7 +9,6 @@ from datetime import datetime
 from os import path,remove
 
 app = Flask(__name__)
-app.config.from_object('config.DefaultSettings')
 
 
 db = MySQL()
@@ -288,11 +287,19 @@ def guardarCambios():
         nuevoNombreFoto=tiempo+productImg.filename
         # Guardamos la foto en la carpeta uploads.
         productImg.save("uploads/"+nuevoNombreFoto)
-
-    remove(path.join(app.config['CARPETA'], oldProductImg))
-    sql_update = f"""UPDATE `sounds`.`productos`
+        sql_update = f"""UPDATE `sounds`.`productos`
     SET nombre = '{productName}', precio = {productPrice},imagen='{nuevoNombreFoto}' WHERE id_producto = {productId}"""
-    
+        try:
+            remove(path.join(app.config['CARPETA'], oldProductImg))
+        except  FileNotFoundError:
+            #Si no encuentro el archivo a borrar no hago nada
+            pass
+    else:
+        #Si no se eligio ningun archivo -> productImg.filename =''
+        #La columna imagen en la base de datos tiene un valor por defecto NULL, para permitir cargar productos sin imagen
+        #El valor NULL no existe en Python y se convierte a None
+        sql_update = f"""UPDATE `sounds`.`productos`
+    SET nombre = '{productName}', precio = {productPrice},imagen='{oldProductImg}' WHERE id_producto = {productId}"""
     conn = db.connect()
     curr = conn.cursor()
     
@@ -308,4 +315,5 @@ def usuarioNoAutorizado():
 
 
 if __name__=="__main__":
+    app.config.from_object('config.DefaultSettings')
     app.run()
