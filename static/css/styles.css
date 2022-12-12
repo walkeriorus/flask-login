@@ -1,3 +1,21 @@
-.selectible-row:hover{
-    background-color: rgb(151, 151, 235);
+body{
+    background-color: rgb(255, 255, 255);
+}
+#productos{
+    max-width: 960px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+}
+.product{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.codigo{
+    align-self: flex-start;
+}
+.productImg{
+    max-width: 460px;
+    width: 100%;
 }
