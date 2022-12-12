@@ -1,10 +1,12 @@
-from flask import Flask, redirect,render_template,request,url_for, flash
+from flask import Flask, redirect,render_template,request,url_for, flash, send_from_directory
 from flaskext.mysql import MySQL
-from flask_login import LoginManager, login_required, login_user, logout_user, current_user, user_unauthorized
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from user import User
 from modelos import Product
 
 from pymysql import Error
+from datetime import datetime
+from os import path,remove
 
 app = Flask(__name__)
 app.config.from_object('config.DefaultSettings')
@@ -33,7 +35,10 @@ def mostrarUsuarios():
     conn.commit()
     return render_template('usuarios.html', usuarios = usuarios)
     
-    
+@app.route('/cargarImagen/<imagen>')
+@login_required
+def cargarImagen(imagen):
+    return send_from_directory(app.config['CARPETA'], imagen)    
     
 @app.route('/create', methods=['GET','POST'])
 def create():
@@ -193,9 +198,23 @@ def crearProducto():
         if request.method == 'POST':
             _prodName = request.form.get('productName')
             _prodPrice = request.form.get('productPrice')
+            _prodImg = request.files.get('productImg')
+            # Guardamos en now los datos de fecha y hora
+            now = datetime.now()
+
+            # Y en tiempo almacenamos una cadena con esos datos
+            tiempo = now.strftime("%Y%H%M%S")
+
+            #Si el nombre de la foto ha sido proporcionado en el form...
+            if _prodImg.filename!='':
+                #...le cambiamos el nombre.
+                nuevoNombreFoto=tiempo+_prodImg.filename
+                # Guardamos la foto en la carpeta uploads.
+                _prodImg.save("uploads/"+nuevoNombreFoto)
+
             
-            sql = f"""INSERT INTO `sounds`.`productos`(`nombre`,`precio`)
-                    VALUES ('{_prodName}',{_prodPrice})"""
+            sql = f"""INSERT INTO `sounds`.`productos`(`nombre`,`precio`,`imagen`)
+                    VALUES ('{_prodName}',{_prodPrice},'{nuevoNombreFoto}')"""
             
             conn = db.connect()
             curr = conn.cursor()
@@ -218,10 +237,16 @@ def crearProducto():
 @app.route('/eliminar/<int:product_id>')
 @login_required
 def eliminarProducto(product_id):
+    sql_select = f"""SELECT imagen FROM `sounds`.`productos`
+    WHERE id_producto = {product_id}"""
     sql_delete = f"""DELETE FROM `sounds`.`productos`
     WHERE `id_producto` = {product_id}"""
     conn = db.connect()
     curr = conn.cursor()
+    curr.execute(sql_select)
+    imagen = curr.fetchone()[0]
+    remove(path.join(app.config['CARPETA'], imagen))
+
     curr.execute(sql_delete)
     conn.commit()
     flash('Producto eliminado.')
@@ -249,9 +274,24 @@ def guardarCambios():
     productId = request.form.get('productId')
     productName = request.form.get('productName')
     productPrice = request.form.get('productPrice')
-    
+    productImg = request.files.get('productImg')
+    oldProductImg = request.form.get('oldImage')
+    # Guardamos en now los datos de fecha y hora
+    now = datetime.now()
+
+    # Y en tiempo almacenamos una cadena con esos datos
+    tiempo = now.strftime("%Y%H%M%S")
+
+    #Si el nombre de la foto ha sido proporcionado en el form...
+    if productImg.filename!='':
+        #...le cambiamos el nombre.
+        nuevoNombreFoto=tiempo+productImg.filename
+        # Guardamos la foto en la carpeta uploads.
+        productImg.save("uploads/"+nuevoNombreFoto)
+
+    remove(path.join(app.config['CARPETA'], oldProductImg))
     sql_update = f"""UPDATE `sounds`.`productos`
-    SET nombre = '{productName}', precio = {productPrice} WHERE id_producto = {productId}"""
+    SET nombre = '{productName}', precio = {productPrice},imagen='{nuevoNombreFoto}' WHERE id_producto = {productId}"""
     
     conn = db.connect()
     curr = conn.cursor()
