@@ -1,0 +1,16 @@
+El archivo requirements.txt es para recrear el entorno virtual con todos los paquetes necesarios
+para ejecutar este crud(WTForms me quedo sin usar jaja).
+1 - Crear el entorno virtual
+    En windows desde cmd o ps:
+        python -m venv .venv
+    En linux desde la terminal:
+        python3 -m venv .venv
+
+    NOTA: .venv sera el nombre del repositorio, si lo desea puede usar cualquier otro nombre.
+2 - Activar el entorno virtual
+    En windows : .venv/Scripts/activate
+    En linux: source .venv/bin/activate
+    En cualquiera de las lineas anteriores reemplazar .venv por el nombre de el entorno virtual que usted creo.
+3 - Ejecutar:
+    pip install -r requirements.txt
+    Esto instalara las dependencias que indique el archivo requirements.txt en el entorno virtual.
