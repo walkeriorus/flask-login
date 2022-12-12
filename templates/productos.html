@@ -7,7 +7,11 @@
     <div class="product">
         <h3>{{product.name}}</h3>
         <h4 class="codigo">Codigo: {{product.id}}</h4>
+        {% if product.image is not none() %}
         <img src="{{url_for('cargarImagen',imagen=product.image)}}" class='productImg'>
+        {% else %}
+        <div class="img-no-disponible"><p>Imagen no disponible</p></div>
+        {% endif %}
         <h3>$ {{product.price}}</h3>
         <a href="{{url_for('agregarAlCarrito',user_id=current_user.id,id_prod=product.id)}}"><img src="{{url_for('static',filename='img/add-to-cart-32.png')}}" alt="carrito de compras con simbolo de suma" title="añadir al carrito"></a>
     </div>

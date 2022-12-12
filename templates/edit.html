@@ -17,7 +17,11 @@ Crear producto
     <div class="form-group">
         <input type="hidden" value="{{product.image}}" name="oldImage">
         <label for="productImg">Imagen</label>
+        {% if product.image is not none() %}
         <img src="{{url_for('cargarImagen',imagen=product.image)}}" class="productImg"alt="">
+        {% else %}
+        <div class="img-no-disponible"><p>Imagen no disponible</p></div>
+        {% endif %}
         <input type="file" name="productImg" id="productImg" class="form-control">
     </div>
     <button type="submit" class="btn btn-primary">Guardar cambios</button>
