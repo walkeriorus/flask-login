@@ -6,6 +6,7 @@ body{
     margin: 0 auto;
     display: grid;
     grid-template-columns: 1fr;
+    column-gap: 2rem;
 }
 .product{
     display: flex;
