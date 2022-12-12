@@ -170,7 +170,11 @@ def verCarrito(user_id):
     curr.execute(sql)
     productos = list(map(lambda row : Product(row[0],row[1],row[2],row[3]), curr.fetchall()))
     conn.commit()
-    return render_template('carrito.html', products = productos)
+    
+    total = sum(list(map(lambda producto: producto.price, productos)))
+    
+    
+    return render_template('carrito.html', products = productos, total = total)
 #-----------SECCION ADMIN -------------------#
 
 @app.route('/productosAdmin')
