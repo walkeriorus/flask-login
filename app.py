@@ -7,6 +7,9 @@ from modelos import Product
 from pymysql import Error
 from datetime import datetime
 from os import path,remove
+from dbFunctions import connectDb, searchById,searchUserById
+
+
 
 app = Flask(__name__)
 
@@ -22,17 +25,6 @@ login_manager.init_app(app)
 @app.route('/')
 def inicio():
     return redirect(url_for('login'))
-
-@app.route('/usuarios')
-@login_required
-def mostrarUsuarios():
-    sql = "SELECT `user_id`, `user_name`, `user_pass` FROM `sounds`.`usuarios`"
-    conn = db.connect()
-    cursor = conn.cursor()
-    cursor.execute(sql)
-    usuarios = cursor.fetchall()
-    conn.commit()
-    return render_template('usuarios.html', usuarios = usuarios)
     
 @app.route('/cargarImagen/<imagen>')
 @login_required
@@ -53,8 +45,7 @@ def create():
         sql = f"""INSERT INTO `sounds`.`usuarios`(`user_name`,`user_email`,`user_pass`)
         VALUES('{usuario.name}','{usuario.email}','{usuario.password}')"""
         try:
-            conn = db.connect()
-            cursor = conn.cursor()
+            conn, cursor = connectDb(db)
             cursor.execute(sql)
         except Error as e:
             print(e)
@@ -81,8 +72,7 @@ def login():
         sql = f"""SELECT * FROM `sounds`.`usuarios`
         WHERE `user_name`= '{_userName}'"""
         
-        conn = db.connect()
-        curr = conn.cursor()
+        conn, curr = connectDb(db)
         
         curr.execute(sql)
         dbUserInfo = curr.fetchone()
@@ -117,9 +107,7 @@ def logout():
 def verProductos():
     sql = f"""SELECT * FROM `sounds`.`productos`"""
     
-    conn = db.connect()
-    curr = conn.cursor()
-    
+    conn,curr = connectDb(db)
     curr.execute(sql)
             
     productos = list(map(lambda row: Product(row[0],row[1],row[2],row[3]),curr.fetchall()))
@@ -129,8 +117,7 @@ def verProductos():
 @app.route('/carrito/<int:user_id>/<int:id_prod>')
 @login_required
 def agregarAlCarrito(user_id,id_prod):
-    conn = db.connect()
-    curr = conn.cursor()
+    conn,curr = connectDb(db)
     
     sql = f"""INSERT INTO `sounds`.`carrito`(fk_user_id,fk_id_producto)
     VALUES({user_id},{id_prod})
@@ -147,13 +134,12 @@ def quitarDelCarrito(user_id,product_id):
     sql_delete = f"""DELETE FROM `sounds`.`carrito`
     WHERE `fk_user_id`={user_id} AND `fk_id_producto`={product_id}"""
     
-    conn = db.connect()
-    curr = conn.cursor()
+    conn,curr = connectDb(db)
     
     curr.execute(sql_delete)
     conn.commit()
     
-    flash(f'Elimnación de producto éxitosa.')
+    flash(f'Producto quitado del carrito.')
     
     return redirect(url_for('verCarrito',user_id = user_id))
 
@@ -165,8 +151,7 @@ def verCarrito(user_id):
     FROM `sounds`.`productos`, `sounds`.`carrito`, `sounds`.`usuarios`
     WHERE `productos`.`id_producto` = `carrito`.`fk_id_producto` AND `carrito`.`fk_user_id` = `usuarios`.`user_id`
     AND `usuarios`.`user_id`={user_id};"""
-    conn = db.connect()
-    curr = conn.cursor()
+    conn,curr = connectDb(db)
     curr.execute(sql)
     productos = list(map(lambda row : Product(row[0],row[1],row[2],row[3]), curr.fetchall()))
     conn.commit()
@@ -176,6 +161,10 @@ def verCarrito(user_id):
     
     return render_template('carrito.html', products = productos, total = total)
 #-----------SECCION ADMIN -------------------#
+@app.route('/error')
+@login_required
+def usuarioNoAutorizado():
+    return render_template('error.html')
 
 @app.route('/productosAdmin')
 @login_required
@@ -183,20 +172,20 @@ def manipularProductos():
     if current_user.is_admin:
         sql = f"""SELECT * FROM `sounds`.`productos`"""
     
-        conn = db.connect()
-        curr = conn.cursor()
+        conn,curr = connectDb(db)
         
         curr.execute(sql)
                 
         productos = list(map(lambda row: Product(row[0],row[1],row[2],row[3]),curr.fetchall()))
         return render_template('productosAdmin.html', products = productos)
+    else:
+        return redirect(url_for('usuarioNoAutorizado'))
 
 
 
 @app.route('/crearProducto',methods=['GET','POST'])
 @login_required
 def crearProducto():
-    print("\n"*6,current_user.is_admin,"\n"*6)
     if current_user.is_admin:
         if request.method == 'POST':
             _prodName = request.form.get('productName')
@@ -219,8 +208,7 @@ def crearProducto():
             sql = f"""INSERT INTO `sounds`.`productos`(`nombre`,`precio`,`imagen`)
                     VALUES ('{_prodName}',{_prodPrice},'{nuevoNombreFoto}')"""
             
-            conn = db.connect()
-            curr = conn.cursor()
+            conn,curr = connectDb(db)
             
             try:
                 curr.execute(sql)
@@ -240,82 +228,148 @@ def crearProducto():
 @app.route('/eliminar/<int:product_id>')
 @login_required
 def eliminarProducto(product_id):
-    sql_select = f"""SELECT imagen FROM `sounds`.`productos`
-    WHERE id_producto = {product_id}"""
-    sql_delete = f"""DELETE FROM `sounds`.`productos`
-    WHERE `id_producto` = {product_id}"""
-    conn = db.connect()
-    curr = conn.cursor()
-    curr.execute(sql_select)
-    imagen = curr.fetchone()[0]
-    remove(path.join(app.config['CARPETA'], imagen))
+    if current_user.is_admin:
+        sql_select = f"""SELECT imagen FROM `sounds`.`productos`
+        WHERE id_producto = {product_id}"""
+        sql_delete = f"""DELETE FROM `sounds`.`productos`
+        WHERE `id_producto` = {product_id}"""
+        conn,curr = connectDb(db)
+        curr.execute(sql_select)
+        imagen = curr.fetchone()[0]
+        remove(path.join(app.config['CARPETA'], imagen))
 
-    curr.execute(sql_delete)
-    conn.commit()
-    flash('Producto eliminado.')
-    return redirect(url_for('manipularProductos'))
+        curr.execute(sql_delete)
+        conn.commit()
+        flash('Producto eliminado.')
+        return redirect(url_for('manipularProductos'))
+    else:
+        return redirect(url_for('usuarioNoAutorizado'))
 
 @app.route('/edit/<int:product_id>')
 @login_required
 def editarProducto(product_id):
-    sql_select = f"""SELECT * FROM `sounds`.`productos`
-    WHERE `id_producto` = {product_id}"""
-    
-    conn = db.connect()
-    curr = conn.cursor()
-    
-    curr.execute(sql_select)
-    productInfo = curr.fetchone()
-    
-    producto = Product(productInfo[0],productInfo[1],productInfo[2],productInfo[3])
-    return render_template('edit.html', product = producto)
+    if current_user.is_admin:
+        sql_select = f"""SELECT * FROM `sounds`.`productos`
+        WHERE `id_producto` = {product_id}"""
+        
+        conn,curr = connectDb(db)
+        
+        curr.execute(sql_select)
+        productInfo = curr.fetchone()
+        
+        producto = Product(productInfo[0],productInfo[1],productInfo[2],productInfo[3])
+        return render_template('edit.html', product = producto)
+    else:
+        return redirect(url_for('usuarioNoAutorizado'))
 
 @app.route('/guardar',methods=['POST'])
 @login_required
 def guardarCambios():
-    
-    productId = request.form.get('productId')
-    productName = request.form.get('productName')
-    productPrice = request.form.get('productPrice')
-    productImg = request.files.get('productImg')
-    oldProductImg = request.form.get('oldImage')
-    # Guardamos en now los datos de fecha y hora
-    now = datetime.now()
+    if current_user.is_admin:
+        productId = request.form.get('productId')
+        productName = request.form.get('productName')
+        productPrice = request.form.get('productPrice')
+        productImg = request.files.get('productImg')
+        oldProductImg = request.form.get('oldImage')
+        # Guardamos en now los datos de fecha y hora
+        now = datetime.now()
 
-    # Y en tiempo almacenamos una cadena con esos datos
-    tiempo = now.strftime("%Y%H%M%S")
+        # Y en tiempo almacenamos una cadena con esos datos
+        tiempo = now.strftime("%Y%H%M%S")
 
-    #Si el nombre de la foto ha sido proporcionado en el form...
-    if productImg.filename!='':
-        #...le cambiamos el nombre.
-        nuevoNombreFoto=tiempo+productImg.filename
-        # Guardamos la foto en la carpeta uploads.
-        productImg.save("uploads/"+nuevoNombreFoto)
-        sql_update = f"""UPDATE `sounds`.`productos`
-    SET nombre = '{productName}', precio = {productPrice},imagen='{nuevoNombreFoto}' WHERE id_producto = {productId}"""
-        try:
-            remove(path.join(app.config['CARPETA'], oldProductImg))
-        except  FileNotFoundError:
-            #Si no encuentro el archivo a borrar no hago nada
-            pass
+        #Si el nombre de la foto ha sido proporcionado en el form...
+        if productImg.filename!='':
+            #...le cambiamos el nombre.
+            nuevoNombreFoto=tiempo+productImg.filename
+            # Guardamos la foto en la carpeta uploads.
+            productImg.save("uploads/"+nuevoNombreFoto)
+            sql_update = f"""UPDATE `sounds`.`productos`
+        SET nombre = '{productName}', precio = {productPrice},imagen='{nuevoNombreFoto}' WHERE id_producto = {productId}"""
+            try:
+                remove(path.join(app.config['CARPETA'], oldProductImg))
+            except  FileNotFoundError:
+                #Si no encuentro el archivo a borrar no hago nada
+                pass
+        else:
+            #Si no se eligio ningun archivo -> productImg.filename =''
+            #La columna imagen en la base de datos tiene un valor por defecto NULL, para permitir cargar productos sin imagen
+            #El valor NULL no existe en Python y se convierte a None
+            sql_update = f"""UPDATE `sounds`.`productos`
+        SET nombre = '{productName}', precio = {productPrice},imagen='{oldProductImg}' WHERE id_producto = {productId}"""
+        conn,curr = connectDb(db)
+        
+        curr.execute(sql_update)
+        conn.commit()
+        
+        return redirect(url_for('manipularProductos'))
     else:
-        #Si no se eligio ningun archivo -> productImg.filename =''
-        #La columna imagen en la base de datos tiene un valor por defecto NULL, para permitir cargar productos sin imagen
-        #El valor NULL no existe en Python y se convierte a None
-        sql_update = f"""UPDATE `sounds`.`productos`
-    SET nombre = '{productName}', precio = {productPrice},imagen='{oldProductImg}' WHERE id_producto = {productId}"""
-    conn = db.connect()
-    curr = conn.cursor()
-    
-    curr.execute(sql_update)
-    conn.commit()
-    
-    return redirect(url_for('manipularProductos'))
+        return redirect(url_for('usuarioNoAutorizado'))
 
-@app.route('/error')
+@app.route('/usuarios')
 @login_required
-def usuarioNoAutorizado():
-    return render_template('error.html')
+def mostrarUsuarios():
+    if current_user.is_admin:
+        sql = "SELECT `user_id`, `user_name`, `user_pass`,`user_role` FROM `sounds`.`usuarios`"
+        conn,curr = connectDb(db)
+        curr.execute(sql)
+        usuarios = curr.fetchall()
+        conn.commit()
+        return render_template('usuarios.html', usuarios = usuarios)
+    else:
+        return redirect(url_for('usuarioNoAutorizado'))
+
+@app.route('/eliminarUsuario/<int:user_id>')
+@login_required
+def eliminarUsuario(user_id):
+    if current_user.is_admin:
+        sql_delete = f"""DELETE FROM `sounds`.`usuarios` WHERE user_id = {user_id}"""
+
+        conn,curr = connectDb(db)
+
+        curr.execute(sql_delete)
+        conn.commit()
+        flash('Usuario eliminado')
+        return redirect(url_for('mostrarUsuarios'))
+    else:
+        return redirect(url_for('usuarioNoAutorizado'))
+
+@app.route('/verInfo/user/<int:user_id>')
+@login_required
+def verInformacionDeUsuario( user_id ):
+    if current_user.is_admin:
+        busqueda = searchUserById(db,'sounds','usuarios','user_id',user_id)
+        usuario = busqueda[:3]+busqueda[-1:]
+        del busqueda
+        return render_template('user-info.html',usuario = usuario)
+    else:
+        return redirect(url_for('usuarioNoAutorizado'))
+
+@app.route('/makeAdmin/<int:user_id>')
+@login_required
+def makeAdmin(user_id):
+    if current_user.is_admin:
+        sql_update = f"""UPDATE `sounds`.`usuarios`
+        SET `user_role` = 1 WHERE user_id = {user_id}"""
+        conn, curr = connectDb(db)
+        curr.execute(sql_update)
+        conn.commit()
+        return redirect(url_for('mostrarUsuarios'))
+    else:
+        return redirect(url_for('usuarioNoAutorizado'))
+
+@app.route('/makeUser/<int:user_id>')
+@login_required
+def revokePermissions(user_id):
+    if current_user.is_admin:
+        sql_update = f"""UPDATE `sounds`.`usuarios`
+        SET `user_role` = 0 WHERE user_id = {user_id}"""
+        conn, curr = connectDb(db)
+        curr.execute(sql_update)
+        conn.commit()
+        return redirect(url_for('mostrarUsuarios'))
+    else:
+        return redirect(url_for('usuarioNoAutorizado'))
+
 
 
 if __name__=="__main__":
