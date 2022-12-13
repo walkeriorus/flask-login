@@ -1,7 +1,11 @@
 {% extends 'base.html' %}
 {% block title %}Productos{% endblock title %}
 {% block main %}
+{% if current_user.is_admin %}
+{% include 'headerAdmin.html' %}
+{% else %}
 {% include 'header.html' %}
+{% endif %}
 <div id="productos">
     {% for product in products %}
     <div class="product">
