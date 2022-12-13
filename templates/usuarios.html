@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}Usuarios{% endblock title %}
 {% block main %}
-{% include 'header.html' %}
+{% include 'headerAdmin.html' %}
 <table class="table">
+    <caption>Usuarios</caption>
     <thead>
         <tr>
             <th>
@@ -11,19 +12,62 @@
             <th>
                 Nombre
             </th>
-            <th>
-                Orders
+            <th colspan="3">
+                Acciones
             </th>
         </tr>
     </thead>
     <tbody>
         {% for usuario in usuarios %}
+        {% if not usuario[3] %}
         <tr>
             <td>{{usuario[0]}}</td>
             <td>{{usuario[1]}}</td>
-            <td><a href="orders/{{usuario[0]}}">Ver ordenes</a></td>
+            <td><a href="{{url_for('eliminarUsuario',user_id=usuario[0])}}" class='btn btn-danger'>Eliminar usuario</a></td>
+            <td><a href="{{url_for('makeAdmin',user_id=usuario[0])}}" class="btn btn-warning">Hacer Administrador</a></td>
+            <td><a href="{{url_for('verInformacionDeUsuario',user_id=usuario[0])}}" class="btn btn-warning">Ver informacion de usuario</a></td>
         </tr>
+        {% endif %}
         {% endfor %}
     </tbody>
+    <table class="table table-dark table-hover">
+        <caption>Administradores</caption>
+        <thead>
+            <tr>
+                <th>
+                    Id
+                </th>
+                <th>
+                    Nombre
+                </th>
+                <th colspan="3">
+                    Acciones
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usuario in usuarios %}
+            {% if usuario[3] and usuario[0]!=current_user.id %}
+            <tr colspan="3">
+                <td>{{usuario[0]}}</td>
+                <td>{{usuario[1]}}</td>
+                <td><a href="{{url_for('eliminarUsuario',user_id=usuario[0])}}" class='btn btn-danger'>Eliminar usuario</a></td>
+                <td><a href="{{url_for('revokePermissions',user_id=usuario[0])}}" class="btn btn-warning">Quitar permisos</a></td>
+                <td><a href="{{url_for('verInformacionDeUsuario',user_id=usuario[0])}}" class="btn btn-warning">Ver informacion de usuario</a></td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-primary alert-dismissible" role="alert">
+        <strong>{{message}}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
 </table>
 {% endblock main %}
