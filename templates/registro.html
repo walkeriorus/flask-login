@@ -8,26 +8,35 @@ Guardar
     {{ form.csrf_token }}
     <div class="form-group">
         {{ form.name.label }}
-        {{ form.name(size=25)}}
+        {{ form.name(size=25,placeholder='Juan Perez',class='form-control')}}
         {% for error in form.name.errors %}
-        <span style="color: red;">{{ error }}</span>
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <strong>{{error}}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
         {% endfor %}
     </div>
     <div class="form-group">
         {{ form.email.label }}
-        {{ form.email }}
+        {{ form.email(class='form-control',placeholder='juanperez@hotmail.com') }}
         {% for error in form.email.errors %}
-        <span style="color: red;">{{ error }}</span>
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <strong>{{error}}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
         {% endfor %}
     </div>
     <div class="form-group">
         {{ form.password.label }}
-        {{ form.password }}
+        {{ form.password(class='form-control') }}
         {% for error in form.password.errors %}
-        <span style="color: red;">{{ error }}</span>
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <strong>{{error}}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
         {% endfor %}
     </div>
-    {{ form.submit() }}
+    {{ form.submit(class="btn btn-primary") }}
 </form>
 {% with messages = get_flashed_messages()  %}
 {% if messages %}

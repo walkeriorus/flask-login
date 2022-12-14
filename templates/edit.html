@@ -5,26 +5,27 @@ Crear producto
 {% block main %}
 {% include 'headerAdmin.html' %}
 <form action="{{url_for('guardarCambios')}}" method="POST" enctype="multipart/form-data" id="form" class="container text-center">
-    <input type="hidden" name="productId" value="{{product.id}}">
+    {{ form.csrf_token }}
+    {{ form.id(value=product.id)}}
     <div class="form-group">
-        <label for="productName">Nombre del producto</label>
-        <input type="text" name="productName" id="productName" class="form-control" value = "{{product.name}}">
+        {{ form.name.label }}
+        {{ form.name(value=product.name,class='form-control')}}
     </div>
     <div class="form-group">
-        <label for="productPrice">Precio</label>
-        <input type="text" name="productPrice" id="productPrice" class="form-control" value="{{product.price}}">
+        {{ form.price.label }}
+        {{ form.price(value=product.price,class='form-control')}}
     </div>
     <div class="form-group">
-        <input type="hidden" value="{{product.image}}" name="oldImage">
-        <label for="productImg">Imagen</label>
+        {{ form.oldImage(value=product.image)}}
+        {{ form.image.label }}
         {% if product.image is not none() %}
-        <img src="{{url_for('cargarImagen',imagen=product.image)}}" class="productImg"alt="">
+        <img src="{{url_for('cargarImagen',imagen = product.image)}}" class="productImg"alt="">
         {% else %}
         <div class="img-no-disponible"><p>Imagen no disponible</p></div>
         {% endif %}
-        <input type="file" name="productImg" id="productImg" class="form-control">
+        {{ form.image(class='form-control')}}
     </div>
-    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    {{ form.submit(class="btn btn-primary") }}
 </form>
 {% with messages = get_flashed_messages()  %}
 {% if messages %}
