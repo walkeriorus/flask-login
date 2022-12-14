@@ -9,6 +9,7 @@ from datetime import datetime
 from os import path,remove
 from dbFunctions import connectDb, searchById,searchUserById
 
+from forms import FormularioDeRegistro
 
 
 app = Flask(__name__)
@@ -33,28 +34,32 @@ def cargarImagen(imagen):
     
 @app.route('/create', methods=['GET','POST'])
 def create():
-    if request.method == 'GET':
-        return render_template('create.html')
-    else:
-        userName = request.form.get('userName')
-        userEmail = request.form.get('userEmail')
-        userPass = request.form.get('userPass')
-        
-        usuario = User( None, userName, userEmail, userPass )
-    
-        sql = f"""INSERT INTO `sounds`.`usuarios`(`user_name`,`user_email`,`user_pass`)
-        VALUES('{usuario.name}','{usuario.email}','{usuario.password}')"""
-        try:
-            conn, cursor = connectDb(db)
-            cursor.execute(sql)
-        except Error as e:
-            print(e)
-            flash('El nombre de usuario ya existe,intente con otro nombre.')
-            return redirect(url_for('create'))
-        else:
-            conn.commit()
-            return redirect(url_for('inicio'))
+    form = FormularioDeRegistro()
+    if form.validate_on_submit():
+        name = form.name.data
+        email = form.email.data
+        password = form.password.data
 
+        usuario = User(None,name,email,password,0)
+        sql_insert = f"""INSERT INTO `sounds`.`usuarios`(`user_name`,`user_email`,`user_pass`,`user_role`)
+        VALUES('{usuario.name}','{usuario.email}','{usuario.password}',{usuario.is_admin})"""
+        
+        conn,curr = connectDb(db)
+        try:
+            curr.execute(sql_insert)
+        except Error as e:
+            print("\n"*10,e,"\n"*10)
+            flash("El nombre de usuario ya existe")
+            return redirect(url_for('create', form = form ) )
+        else:
+            return redirect(url_for('inicio'))
+        finally:
+            conn.commit()
+    return render_template('registro.html', form = form )
+        
+        
+        
+        
 @login_manager.user_loader
 def load_user(user_id):
     return User.get(db,user_id)
