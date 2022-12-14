@@ -9,7 +9,7 @@ from datetime import datetime
 from os import path,remove
 from dbFunctions import connectDb, searchById,searchUserById
 
-from forms import FormularioDeRegistro
+from forms import FormularioDeRegistro,FormularioCrearProducto,FormularioEditarProducto
 
 
 app = Flask(__name__)
@@ -81,6 +81,8 @@ def login():
         
         curr.execute(sql)
         dbUserInfo = curr.fetchone()
+        conn.commit()
+        
         if dbUserInfo != None:
             dbUserId,dbUserName, dbUserEmail, dbUserPass, db_userRole = dbUserInfo
             usuario = User(dbUserId,dbUserName,dbUserEmail,_userPass, db_userRole)
@@ -116,6 +118,7 @@ def verProductos():
     curr.execute(sql)
             
     productos = list(map(lambda row: Product(row[0],row[1],row[2],row[3]),curr.fetchall()))
+    conn.commit()
     
     return render_template('productos.html', products = productos )
 
@@ -163,8 +166,14 @@ def verCarrito(user_id):
     
     total = sum(list(map(lambda producto: producto.price, productos)))
     
-    
     return render_template('carrito.html', products = productos, total = total)
+
+
+@app.route('/comprarCarrito/<int:user_id>')
+@login_required
+def comprarCarrito( user_id ):
+    pass
+
 #-----------SECCION ADMIN -------------------#
 @app.route('/error')
 @login_required
@@ -182,6 +191,8 @@ def manipularProductos():
         curr.execute(sql)
                 
         productos = list(map(lambda row: Product(row[0],row[1],row[2],row[3]),curr.fetchall()))
+        
+        conn.commit()
         return render_template('productosAdmin.html', products = productos)
     else:
         return redirect(url_for('usuarioNoAutorizado'))
@@ -192,10 +203,11 @@ def manipularProductos():
 @login_required
 def crearProducto():
     if current_user.is_admin:
-        if request.method == 'POST':
-            _prodName = request.form.get('productName')
-            _prodPrice = request.form.get('productPrice')
-            _prodImg = request.files.get('productImg')
+        form = FormularioCrearProducto()
+        if form.validate_on_submit():
+            _prodName = form.name.data
+            _prodPrice = form.price.data
+            _prodImg = form.image.data
             # Guardamos en now los datos de fecha y hora
             now = datetime.now()
 
@@ -219,14 +231,14 @@ def crearProducto():
                 curr.execute(sql)
             except Error as e:
                 print(e)
-                flash('Ha ocurrido un error, producto no añadido')
+                flash('Producto duplicado, producto no añadido.')
                 return redirect(url_for('crearProducto'))
             else:
                 conn.commit()
                 flash('Producto agregado con éxito.')
                 return redirect(url_for('crearProducto'))
         else:
-            return render_template('cargar-producto.html')
+            return render_template('cargar-producto.html',form = form)
     else:
         return redirect(url_for('usuarioNoAutorizado'))
 
@@ -254,6 +266,7 @@ def eliminarProducto(product_id):
 @login_required
 def editarProducto(product_id):
     if current_user.is_admin:
+        form = FormularioEditarProducto()
         sql_select = f"""SELECT * FROM `sounds`.`productos`
         WHERE `id_producto` = {product_id}"""
         
@@ -261,9 +274,10 @@ def editarProducto(product_id):
         
         curr.execute(sql_select)
         productInfo = curr.fetchone()
+        conn.commit()
         
         producto = Product(productInfo[0],productInfo[1],productInfo[2],productInfo[3])
-        return render_template('edit.html', product = producto)
+        return render_template('edit.html',product = producto, form = form)
     else:
         return redirect(url_for('usuarioNoAutorizado'))
 
@@ -271,42 +285,47 @@ def editarProducto(product_id):
 @login_required
 def guardarCambios():
     if current_user.is_admin:
-        productId = request.form.get('productId')
-        productName = request.form.get('productName')
-        productPrice = request.form.get('productPrice')
-        productImg = request.files.get('productImg')
-        oldProductImg = request.form.get('oldImage')
-        # Guardamos en now los datos de fecha y hora
-        now = datetime.now()
+        form = FormularioEditarProducto()
+        if form.validate_on_submit():
+            productId = form.id.data
+            productName = form.name.data
+            productPrice = form.price.data
+            productImg = form.image.data
+            oldProductImg = form.oldImage.data
+            # Guardamos en now los datos de fecha y hora
+            now = datetime.now()
+            print("\n"*10)
+            print(f"""
+                  { productId}
+                  {productName}
+                  {productPrice}
+                  {productImg}
+                  {oldProductImg}""")
+            # Y en tiempo almacenamos una cadena con esos datos
+            tiempo = now.strftime("%Y%H%M%S")
 
-        # Y en tiempo almacenamos una cadena con esos datos
-        tiempo = now.strftime("%Y%H%M%S")
-
-        #Si el nombre de la foto ha sido proporcionado en el form...
-        if productImg.filename!='':
-            #...le cambiamos el nombre.
-            nuevoNombreFoto=tiempo+productImg.filename
-            # Guardamos la foto en la carpeta uploads.
-            productImg.save("uploads/"+nuevoNombreFoto)
-            sql_update = f"""UPDATE `sounds`.`productos`
-        SET nombre = '{productName}', precio = {productPrice},imagen='{nuevoNombreFoto}' WHERE id_producto = {productId}"""
-            try:
-                remove(path.join(app.config['CARPETA'], oldProductImg))
-            except  FileNotFoundError:
-                #Si no encuentro el archivo a borrar no hago nada
-                pass
-        else:
-            #Si no se eligio ningun archivo -> productImg.filename =''
-            #La columna imagen en la base de datos tiene un valor por defecto NULL, para permitir cargar productos sin imagen
-            #El valor NULL no existe en Python y se convierte a None
-            sql_update = f"""UPDATE `sounds`.`productos`
-        SET nombre = '{productName}', precio = {productPrice},imagen='{oldProductImg}' WHERE id_producto = {productId}"""
-        conn,curr = connectDb(db)
-        
-        curr.execute(sql_update)
-        conn.commit()
-        
-        return redirect(url_for('manipularProductos'))
+            #Si el nombre de la foto ha sido proporcionado en el form...
+            if productImg.filename!='':
+                #...le cambiamos el nombre.
+                nuevoNombreFoto=tiempo+productImg.filename
+                # Guardamos la foto en la carpeta uploads.
+                productImg.save("uploads/"+nuevoNombreFoto)
+                sql_update = f"""UPDATE `sounds`.`productos`
+            SET nombre = '{productName}', precio = {productPrice},imagen='{nuevoNombreFoto}' WHERE id_producto = {productId}"""
+                try:
+                    remove(path.join(app.config['CARPETA'], oldProductImg))
+                except  FileNotFoundError:
+                    #Si no encuentro el archivo a borrar no hago nada
+                    print("\n"*10,"ARCHIVO NO ENCONTRADO"*5,"\n"*10)
+                    pass
+            else:
+                sql_update = f"""UPDATE `sounds`.`productos` SET nombre = '{productName}', precio = {productPrice},imagen='{oldProductImg}' WHERE id_producto = {productId}"""
+                
+            conn,curr = connectDb(db)
+            curr.execute(sql_update)
+            conn.commit()
+            
+            return redirect(url_for('manipularProductos'))
     else:
         return redirect(url_for('usuarioNoAutorizado'))
 
