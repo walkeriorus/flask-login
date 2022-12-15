@@ -5,7 +5,7 @@ from user import User
 from modelos import Product
 
 from pymysql import Error
-from datetime import datetime
+from datetime import datetime,date
 from os import path,remove
 from dbFunctions import connectDb, searchById,searchUserById
 
@@ -172,7 +172,44 @@ def verCarrito(user_id):
 @app.route('/comprarCarrito/<int:user_id>')
 @login_required
 def comprarCarrito( user_id ):
-    pass
+    
+    sql_select_carrito = f"""SELECT * FROM `sounds`.`carrito` WHERE fk_user_id = {user_id}"""
+    conn , curr = connectDb(db)
+    curr.execute(sql_select_carrito)
+    carrito = curr.fetchall()
+    
+    now = datetime.now()
+    fecha_actual = date(now.year,now.month,now.day).isoformat()
+    print("\n"*10,fecha_actual,"\n"*10)
+    
+    for fila in carrito:
+        curr.execute(f"""INSERT INTO `sounds`.`compras`(fk_user_id, fk_id_producto, fecha)
+    VALUES({fila[0]},{fila[1]},'{fecha_actual}')""")
+        
+    del carrito
+    curr.execute(f"""DELETE FROM `sounds`.`carrito` WHERE fk_user_id = {user_id}""")
+    conn.commit()
+    
+    return redirect(url_for('verCarrito', user_id = user_id))
+
+@app.route('/verCompras/<int:user_id>')
+@login_required
+def verCompras(user_id):
+    
+    sql = f"""SELECT productos.id_producto,productos.nombre,productos.imagen,productos.precio, 
+compras.fecha
+FROM SOUNDS.compras
+INNER JOIN SOUNDS.productos ON compras.fk_id_producto = productos.id_producto
+AND compras.fk_user_id = {user_id}"""
+    conn, curr = connectDb(db)
+    curr.execute(sql)
+    compras = curr.fetchall()
+    
+    
+    curr.execute(sql)
+    conn.commit()
+    return render_template('compras.html', compras = compras )
+
 
 #-----------SECCION ADMIN -------------------#
 @app.route('/error')
