@@ -164,9 +164,16 @@ def verCarrito(user_id):
     productos = list(map(lambda row : Product(row[0],row[1],row[2],row[3]), curr.fetchall()))
     conn.commit()
     
-    total = sum(list(map(lambda producto: producto.price, productos)))
     
-    return render_template('carrito.html', products = productos, total = total)
+    return render_template('carrito.html', products = productos )
+
+@app.context_processor
+def total_carrito_processor():
+    def total( productos ):
+        total_a_pagar = sum(list(map(lambda producto: producto.price, productos)))
+        return total_a_pagar
+    return { 'total': total }
+        
 
 
 @app.route('/comprarCarrito/<int:user_id>')
