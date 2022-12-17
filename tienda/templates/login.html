@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}
+Iniciar Sesión
+{% endblock title %}
+{% block main %}
+{% include 'user/header.html' %}
+<form action="/login" method="POST" enctype="multipart/form-data" id="form" class="container text-center">
+    <div class="form-group">
+        <label for="userName">Usuario</label>
+        <input type="text" name="userName" id="userName" class="form-control" placeholder="pepito">
+    </div>
+    <div class="form-group">
+        <label for="userPass">Contraseña</label>
+        <input type="password" name="userPass" id="userPass" class="form-control">
+    </div>
+    <a href="{{url_for('user.create')}}" class="me-5">Registrarse</a>
+    <button type="submit" class="btn btn-primary">Iniciar sesion</button>
+</form>
+{% with messages = get_flashed_messages()  %}
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-primary alert-dismissible" role="alert">
+    <strong>{{message}}</strong>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+{% endblock main %}

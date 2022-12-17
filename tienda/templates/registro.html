@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}
+Guardar
+{% endblock title %}
+{% block main %}
+{% include 'user/header.html' %}
+<form action="/create" method="POST" enctype="multipart/form-data" id="form" class="container text-center" novalidate >
+    {{ form.csrf_token }}
+    <div class="form-group">
+        {{ form.name.label }}
+        {{ form.name(size=25,placeholder='Juan Perez',class='form-control')}}
+        {% for error in form.name.errors %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <strong>{{error}}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="form-group">
+        {{ form.email.label }}
+        {{ form.email(class='form-control',placeholder='juanperez@hotmail.com') }}
+        {% for error in form.email.errors %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <strong>{{error}}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="form-group">
+        {{ form.password.label }}
+        {{ form.password(class='form-control') }}
+        {% for error in form.password.errors %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <strong>{{error}}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+{% with messages = get_flashed_messages()  %}
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-primary alert-dismissible" role="alert">
+    <strong>{{message}}</strong>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+{% endblock main %}

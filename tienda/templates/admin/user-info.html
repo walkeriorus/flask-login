@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}user-detail{% endblock title %}
+{% block main %}
+{% include 'admin/headerAdmin.html' %}
+<table class="table table-striped table-hover">
+    <thead>
+        <th>Id</th>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Rol</th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{usuario[0]}}</td>
+            <td>{{usuario[1]}}</td>
+            <td>{{usuario[2]}}</td>
+            <td>{{ "Admin" if usuario[3] else "User"}}</td>
+        </tr>
+    </tbody>
+</table>
+<a href="{{url_for('admin.mostrarUsuarios')}}" class="btn btn-primary">Volver a lista de usuarios</a>
+{% endblock main %}

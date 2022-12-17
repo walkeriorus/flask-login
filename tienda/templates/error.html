@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Usuario no autorizado{% endblock title %}
+{% block main %}
+<div class="container mt-5 border border-5 border-primary rounded text-center shadow">
+    <div class="container-md">
+        <p>No tiene los permisos necesarios para acceder a este contenido</p>
+        <p>Inicie sesión con sus credenciales de administrador para acceder al contenido</p>
+        <a href="{{url_for('user.verProductos')}}" class="btn btn-primary row">Volver</a>
+    </div>
+</div>
+
+{% endblock main %}
