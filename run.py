@@ -1,8 +1,10 @@
 from tienda import app
 from database import db
 from tienda.config import DefaultSettings
-from user import User
 from flask_login import LoginManager
+from tienda.user.models import User
+
+from webbrowser import open_new_tab
 
 
 app.env="development"
@@ -16,5 +18,5 @@ def load_user(user_id):
     return User.get(db,user_id)
 
 
-
+open_new_tab("http://localhost:5000/")
 app.run()
